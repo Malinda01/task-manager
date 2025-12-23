@@ -1,35 +1,63 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import { initGoogleAuth, signIn, addEventToCalendar } from "./googleCalendar";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [signedIn, setSignedIn] = useState(false);
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+
+  useEffect(() => {
+    initGoogleAuth(setSignedIn);
+  }, []);
+
+  const addTask = async () => {
+    if (!title || !date) return alert("Fill all fields");
+
+    const start = new Date(date);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+
+    await addEventToCalendar({
+      title,
+      description: "Task from Task Manager",
+      start: start.toISOString(),
+      end: end.toISOString(),
+    });
+
+    alert("Task added to Google Calendar 🎉");
+    setTitle("");
+    setDate("");
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div className="container">
+      <h1>🗓️ Task Manager</h1>
 
-export default App
+      {!signedIn && (
+        <button onClick={signIn} className="btn">
+          Sign in with Google
+        </button>
+      )}
+
+      {signedIn && (
+        <>
+          <input
+            type="text"
+            placeholder="Task title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <input
+            type="datetime-local"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+
+          <button onClick={addTask} className="btn">
+            Add Task
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
